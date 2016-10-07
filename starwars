@@ -2,12 +2,15 @@
 <?php
 // starwars
 
+use Doctrine\DBAL\DriverManager;
 use Symfony\Component\Console\Application;
 
 require __DIR__ . '/vendor/autoload.php';
 
-$app = new Application('Star Wars Saga Edition', '0.1');
+$db = DriverManager::getConnection( [ 'url' => 'sqlite:///db.sqlite' ] );
 
-// ... register commands
+$app = new Application( 'Star Wars Saga Edition', '0.1' );
+
+$app->add( new StarWars\Book\Listing( $db ) );
 
 $app->run();
