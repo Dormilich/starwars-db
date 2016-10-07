@@ -1,0 +1,12 @@
+paths:
+    migrations: %%PHINX_CONFIG_DIR%%/phinx/migrate
+    seeds: %%PHINX_CONFIG_DIR%%/phinx/seed
+
+environments:
+    default_migration_table: phinxlog
+    default:
+        adapter: sqlite
+        name: %%PHINX_CONFIG_DIR%%/yoda.sq3
+    test:
+        adapter: sqlite
+        memory: true
