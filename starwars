@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+// starwars
+
+use Symfony\Component\Console\Application;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$app = new Application('Star Wars Saga Edition', '0.1');
+
+// ... register commands
+
+$app->run();
