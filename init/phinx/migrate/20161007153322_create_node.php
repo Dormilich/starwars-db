@@ -16,6 +16,9 @@ class CreateNode extends AbstractMigration
             ->addColumn( 'page', 'integer' )
             ->addForeignKey( 'type', 'NodeType', 'id' )
             ->addForeignKey( 'book', 'Book', 'id' )
+            ->addIndex( [ 'type', 'name' ], [
+                'unique' => true,
+            ] )
             ->create()
         ;
     }
