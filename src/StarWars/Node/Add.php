@@ -2,6 +2,7 @@
 
 namespace StarWars\Node;
 
+use Exception;
 use RuntimeException;
 use UnexpectedValueException;
 use Doctrine\DBAL\Connection;
@@ -69,16 +70,24 @@ class Add extends Command
      */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $name = $input->getArgument( 'name' );
-        $type = $this->inputType( $input );
-        $book = $this->inputBook( $input );
-        $page = $this->inputPage( $input );
-
-        $id = $this->createEntry( $type, $name, $book, $page );
-
         $io = new SymfonyStyle( $input, $output );
-        $query = $this->getQuery( $id );
-        $this->renderResult( $io, $query );
+        try {
+            $name = $input->getArgument( 'name' );
+            $type = $this->inputType( $input );
+            $book = $this->inputBook( $input );
+            $page = $this->inputPage( $input );
+
+            $id = $this->createEntry( $type, $name, $book, $page );
+
+            $query = $this->getQuery( $id );
+            $this->renderResult( $io, $query );
+
+        } catch (Exception $e) {
+            $io->error( $e->getMessage() );
+            if ( $output->isVerbose() ) {
+                $io->listing( $e->getTrace() );
+            }
+        }
     }
 
     /**

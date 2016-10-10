@@ -2,6 +2,7 @@
 
 namespace StarWars\Node;
 
+use Exception;
 use UnexpectedValueException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -72,23 +73,31 @@ class Set extends Command
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $io = new SymfonyStyle( $input, $output );
-        $id = $this->getEntry( $input );
+        try {
+            $id = $this->getEntry( $input );
 
-        if ( ! $id ) {
-            $io->note( 'There is no such entry in the database' );
-            exit( 0 );
+            if ( ! $id ) {
+                $io->note( 'There is no such entry in the database' );
+                exit( 0 );
+            }
+
+            $data = [];
+            $data[ 'book' ] = $this->inputBook( $input );
+            $data[ 'page' ] = $this->inputPage( $input );
+            $data[ 'description' ] = $input->getOption( 'descr' );
+
+            $data = array_filter( $data );
+            $this->updateEntry( $id, $data );
+
+            $query = $this->getQuery( $id );
+            $this->renderResult( $io, $query );
+
+        } catch (Exception $e) {
+            $io->error( $e->getMessage() );
+            if ( $output->isVerbose() ) {
+                $io->listing( $e->getTrace() );
+            }
         }
-
-        $data = [];
-        $data[ 'book' ] = $this->inputBook( $input );
-        $data[ 'page' ] = $this->inputPage( $input );
-        $data[ 'description' ] = $input->getOption( 'descr' );
-
-        $data = array_filter( $data );
-        $this->updateEntry( $id, $data );
-
-        $query = $this->getQuery( $id );
-        $this->renderResult( $io, $query );
     }
 
     /**
