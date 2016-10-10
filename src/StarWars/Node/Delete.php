@@ -13,8 +13,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Delete extends Command
 {
+    /**
+     * @var Connection $db DBAL connection object.
+     */
     protected $db;
 
+    /**
+     * Set up the command.
+     * 
+     * @param Connection $db DBAL connection object.
+     * @return self
+     */
     public function __construct( Connection $db )
     {
         $this->db = $db;
@@ -22,6 +31,9 @@ class Delete extends Command
         parent::__construct();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this
@@ -40,12 +52,15 @@ class Delete extends Command
         ;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $io = new SymfonyStyle( $input, $output );
         $id = $this->getEntry( $input );
 
-        if ( ! $id ) {
+        if ( $id === 0 ) {
             $io->note( 'There is no such entry in the database' );
             exit( 0 );
         }
@@ -53,6 +68,12 @@ class Delete extends Command
         $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );
     }
 
+    /**
+     * Get the entry id from the provided input. Returns `0` if there is no match.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer Entry id.
+     */
     private function getEntry( InputInterface $input )
     {
         $name = $input->getArgument( 'name' );

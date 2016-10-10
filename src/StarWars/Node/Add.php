@@ -2,7 +2,6 @@
 
 namespace StarWars\Node;
 
-use LogicException;
 use RuntimeException;
 use UnexpectedValueException;
 use Doctrine\DBAL\Connection;
@@ -16,8 +15,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Add extends Command
 {
+    /**
+     * @var Connection $db DBAL connection object.
+     */
     protected $db;
 
+    /**
+     * Set up the command.
+     * 
+     * @param Connection $db DBAL connection object.
+     * @return self
+     */
     public function __construct( Connection $db )
     {
         $this->db = $db;
@@ -25,6 +33,9 @@ class Add extends Command
         parent::__construct();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this
@@ -53,6 +64,9 @@ class Add extends Command
         ;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $name = $input->getArgument( 'name' );
@@ -67,12 +81,19 @@ class Add extends Command
         $this->renderResult( $io, $query );
     }
 
+    /**
+     * Get the entry type from the input source.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer Entry type id.
+     * @throws UnexpectedValueException Unknown type name.
+     */
     private function inputType( InputInterface $input )
     {
         $type = $input->getArgument( 'type' );
         $type = $this->getType( $type );
 
-        if ( is_int( $type ) ) {
+        if ( $type > 0 ) {
             return $type;
         }
 
@@ -80,12 +101,19 @@ class Add extends Command
         throw new UnexpectedValueException( $msg );
     }
 
+    /**
+     * Get the book from the input source.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer Book id.
+     * @throws UnexpectedValueException Invalid book.
+     */
     private function inputBook( InputInterface $input )
     {
         $book = $input->getOption( 'book' );
         $book = $this->getBook( $book );
 
-        if ( $book ) {
+        if ( $book > 0 ) {
             return $book;
         }
 
@@ -93,6 +121,13 @@ class Add extends Command
         throw new UnexpectedValueException( $msg );
     }
 
+    /**
+     * Get the page number from the input source.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer Page number.
+     * @throws UnexpectedValueException Invalid page.
+     */
     private function inputPage( InputInterface $input )
     {
         $page = $input->getOption( 'page' );
@@ -107,6 +142,16 @@ class Add extends Command
         throw new UnexpectedValueException( $msg );
     }
 
+    /**
+     * Insert entry data into the database.
+     * 
+     * @param integer $type Entry type id.
+     * @param string $name Entry name.
+     * @param integer $book Book id.
+     * @param integer $page Page number.
+     * @return integer Entry id.
+     * @throws RuntimeException Insertion failed.
+     */
     private function createEntry( $type, $name, $book, $page )
     {
         $ok = $this->db->insert( 'Node', [
@@ -129,6 +174,12 @@ class Add extends Command
         throw new RuntimeException( $msg );
     }
 
+    /**
+     * Get the type id from the type name. Returns `0` if there is no such type.
+     * 
+     * @param string $type Entry type name.
+     * @return integer Entry type id.
+     */
     private function getType( $type )
     {
         return (int) $this->db->createQueryBuilder()
@@ -141,6 +192,12 @@ class Add extends Command
         ;
     }
 
+    /**
+     * Get the book id from the book abbreviation. Returns `0` if there is no match.
+     * 
+     * @param string $book Book abbreviation.
+     * @return integer Book id.
+     */
     private function getBook( $abbr )
     {
         return (int) $this->db->createQueryBuilder()
@@ -153,6 +210,12 @@ class Add extends Command
         ;
     }
 
+    /**
+     * Get the added entry’s data.
+     * 
+     * @param integer $id Entry id.
+     * @return QueryBuilder
+     */
     private function getQuery( $id )
     {
         return $this->db->createQueryBuilder()
@@ -170,6 +233,13 @@ class Add extends Command
         ;
     }
 
+    /**
+     * Display the results of the query object.
+     * 
+     * @param SymfonyStyle $io I/O helper object.
+     * @param QueryBuilder $query Query object.
+     * @return void
+     */
     private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();

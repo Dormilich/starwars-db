@@ -13,8 +13,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Find extends Command
 {
+    /**
+     * @var Connection $db DBAL connection object.
+     */
     protected $db;
 
+    /**
+     * Set up the command.
+     * 
+     * @param Connection $db DBAL connection object.
+     * @return self
+     */
     public function __construct( Connection $db )
     {
         $this->db = $db;
@@ -22,6 +31,9 @@ class Find extends Command
         parent::__construct();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this
@@ -43,6 +55,9 @@ class Find extends Command
         ;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $name = $input->getArgument( 'name' );
@@ -58,6 +73,13 @@ class Find extends Command
         $this->renderResult( $io, $query );
     }
 
+    /**
+     * Fetch the data matching the input.
+     * 
+     * @param string $type Entry type name.
+     * @param string $name Entry name (or a part thereof).
+     * @return QueryBuilder
+     */
     private function getQuery( $type, $name )
     {
         return $this->db->createQueryBuilder()
@@ -81,6 +103,13 @@ class Find extends Command
         ;
     }
 
+    /**
+     * Display the results of the query object.
+     * 
+     * @param SymfonyStyle $io I/O helper object.
+     * @param QueryBuilder $query Query object.
+     * @return void
+     */
     private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();

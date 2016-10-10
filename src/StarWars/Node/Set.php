@@ -14,8 +14,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Set extends Command
 {
+    /**
+     * @var Connection $db DBAL connection object.
+     */
     protected $db;
 
+    /**
+     * Set up the command.
+     * 
+     * @param Connection $db DBAL connection object.
+     * @return self
+     */
     public function __construct( Connection $db )
     {
         $this->db = $db;
@@ -23,6 +32,9 @@ class Set extends Command
         parent::__construct();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this
@@ -54,6 +66,9 @@ class Set extends Command
         ;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $io = new SymfonyStyle( $input, $output );
@@ -76,6 +91,12 @@ class Set extends Command
         $this->renderResult( $io, $query );
     }
 
+    /**
+     * Get the entry id from the provided input. Returns `0` if there is no match.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer Entry id.
+     */
     private function getEntry( InputInterface $input )
     {
         $name = $input->getArgument( 'name' );
@@ -94,6 +115,12 @@ class Set extends Command
         ;
     }
 
+    /**
+     * Get the book from the input source.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer|false Book id.
+     */
     private function inputBook( InputInterface $input )
     {
         $book = $input->getOption( 'book' );
@@ -103,13 +130,19 @@ class Set extends Command
         }
 
         if ( $book = $this->getBook( $book ) ) {
-            return $book;
+            return (int) $book;
         }
 
         $msg = 'Invalid book abbreviation';
         throw new UnexpectedValueException( $msg );
     }
 
+    /**
+     * Get the page number from the input source.
+     * 
+     * @param InputInterface $input Input object.
+     * @return integer|false Page number.
+     */
     private function inputPage( InputInterface $input )
     {
         $page = $input->getOption( 'page' );
@@ -129,9 +162,15 @@ class Set extends Command
         throw new UnexpectedValueException( $msg );
     }
 
+    /**
+     * Get the book id from the book abbreviation. Returns `0` if there is no match.
+     * 
+     * @param string $book Book abbreviation.
+     * @return integer|false Book id.
+     */
     private function getBook( $abbr )
     {
-        return (int) $this->db->createQueryBuilder()
+        return $this->db->createQueryBuilder()
             ->select( 'id' )
             ->from( 'Book' )
             ->where( 'abbreviation = :name' )
@@ -141,6 +180,13 @@ class Set extends Command
         ;
     }
 
+    /**
+     * Save the new entry data to the database.
+     * 
+     * @param integer $id Entry id.
+     * @param array $fields Database fields to update.
+     * @return integer Affected rows.
+     */
     private function updateEntry( $id, array $fields )
     {
         return $this->db->update( 'Node', $fields, [
@@ -153,6 +199,12 @@ class Set extends Command
         ]);
     }
 
+    /**
+     * Get the updated entry’s data.
+     * 
+     * @param integer $id Entry id.
+     * @return QueryBuilder
+     */
     private function getQuery( $id )
     {
         return $this->db->createQueryBuilder()
@@ -171,6 +223,13 @@ class Set extends Command
         ;
     }
 
+    /**
+     * Display the results of the query object.
+     * 
+     * @param SymfonyStyle $io I/O helper object.
+     * @param QueryBuilder $query Query object.
+     * @return void
+     */
     private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
         $result = $query->execute()->fetch();

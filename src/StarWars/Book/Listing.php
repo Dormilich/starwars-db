@@ -12,8 +12,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Listing extends Command
 {
+    /**
+     * @var Connection $db DBAL connection object.
+     */
     protected $db;
 
+    /**
+     * Set up the command.
+     * 
+     * @param Connection $db DBAL connection object.
+     * @return self
+     */
     public function __construct( Connection $db )
     {
         $this->db = $db;
@@ -21,6 +30,9 @@ class Listing extends Command
         parent::__construct();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this
@@ -36,6 +48,9 @@ class Listing extends Command
         ;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $io = new SymfonyStyle( $input, $output );
@@ -48,6 +63,11 @@ class Listing extends Command
         $this->renderResult( $io, $query );
     }
 
+    /**
+     * Create the selection part of the query object.
+     * 
+     * @return QueryBuilder
+     */
     private function getQuery()
     {
         return $this->db->createQueryBuilder()
@@ -61,6 +81,13 @@ class Listing extends Command
         ;
     }
 
+    /**
+     * Set the WHERE conditions on the query object.
+     * 
+     * @param QueryBuilder $query Query object.
+     * @param string $name Search string.
+     * @return void
+     */
     private function setLookupName( QueryBuilder $query, $name )
     {
         $query
@@ -71,6 +98,13 @@ class Listing extends Command
         ;
     }
 
+    /**
+     * Display the results of the query object.
+     * 
+     * @param SymfonyStyle $io I/O helper object.
+     * @param QueryBuilder $query Query object.
+     * @return void
+     */
     private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();
