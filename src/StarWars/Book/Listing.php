@@ -16,9 +16,9 @@ class Listing extends Command
 
     public function __construct( Connection $db )
     {
-        parent::__construct();
-
         $this->db = $db;
+
+        parent::__construct();
     }
 
     protected function configure()
@@ -45,9 +45,7 @@ class Listing extends Command
             $this->setLookupName( $query, $name );
         }
 
-        $result = $query->execute()->fetchAll();
-
-        $this->renderResult( $io, $result );
+        $this->renderResult( $io, $query );
     }
 
     private function getQuery()
@@ -73,8 +71,9 @@ class Listing extends Command
         ;
     }
 
-    private function renderResult( SymfonyStyle $io, array $data )
+    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
+        $result = $query->execute()->fetchAll();
         $io->table( [ 'Abbr.', 'Title', 'ISBN', 'Authors' ], $data );
     }
 }
