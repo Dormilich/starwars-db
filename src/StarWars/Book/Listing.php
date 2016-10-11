@@ -61,6 +61,8 @@ class Listing extends Command
         }
 
         $this->renderResult( $io, $query );
+
+        exit( 0 );
     }
 
     /**
@@ -108,6 +110,6 @@ class Listing extends Command
     private function renderResult( SymfonyStyle $io, QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();
-        $io->table( [ 'Abbr.', 'Title', 'ISBN', 'Authors' ], $data );
+        $io->table( [ 'Abbr.', 'Title', 'ISBN', 'Authors' ], $result );
     }
 }

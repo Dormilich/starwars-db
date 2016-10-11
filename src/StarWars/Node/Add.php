@@ -87,7 +87,10 @@ class Add extends Command
             if ( $output->isVerbose() ) {
                 $io->listing( $e->getTrace() );
             }
+            exit( 1 );
         }
+
+        exit( 0 );
     }
 
     /**
@@ -194,7 +197,7 @@ class Add extends Command
         return (int) $this->db->createQueryBuilder()
             ->select( 'id' )
             ->from( 'NodeType' )
-            ->where( 'name = :name' )
+            ->where( 'name LIKE :name' )
             ->setParameter( ':name', $type, 'string' )
             ->execute()
             ->fetchColumn()
@@ -212,7 +215,7 @@ class Add extends Command
         return (int) $this->db->createQueryBuilder()
             ->select( 'id' )
             ->from( 'Book' )
-            ->where( 'abbreviation = :name' )
+            ->where( 'abbreviation LIKE :name' )
             ->setParameter( ':name', $abbr, 'string' )
             ->execute()
             ->fetchColumn()

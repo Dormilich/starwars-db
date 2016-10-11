@@ -7,11 +7,10 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class Delete extends Command
+class Info extends Command
 {
     /**
      * @var Connection $db DBAL connection object.
@@ -38,10 +37,14 @@ class Delete extends Command
     {
         $this
             ->setName(
-                'entry:delete'
+                'entry:info'
             )
             ->setDescription(
-                'Delete an entry from the database'
+                'Get entry data from the database'
+            )
+            ->setHelp(
+                'An entry is the basic information item in Star Wars Saga Edition. '.
+                'It can be a Skill, Feat, Talent, Ability, etc.'
             )
             ->addArgument( 'type', InputArgument::REQUIRED, 
                 'Name of the entry’s type'
@@ -61,7 +64,8 @@ class Delete extends Command
         $id = $this->getEntry( $input );
 
         if ( $id > 0 ) {
-            $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );
+            $query = $this->getQuery( $id );
+            $this->renderResult( $io, $query );
         }
         else {
             $io->note( 'There is no such entry in the database' );
@@ -92,5 +96,46 @@ class Delete extends Command
             ->execute()
             ->fetchColumn()
         ;
+    }
+
+    /**
+     * Get the updated entry’s data.
+     * 
+     * @param integer $id Entry id.
+     * @return QueryBuilder
+     */
+    private function getQuery( $id )
+    {
+        return $this->db->createQueryBuilder()
+            ->select( [
+                'n.name',
+                't.name AS type',
+                'n.description',
+                'b.abbreviation AS book',
+                'n.page',
+            ] )
+            ->from( 'Node', 'n' )
+            ->innerJoin( 'n', 'Book', 'b', 'n.book = b.id' )
+            ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
+            ->where( 'n.id = :id' )
+            ->setParameter( ':id', $id, 'integer' )
+        ;
+    }
+
+    /**
+     * Display the results of the query object.
+     * 
+     * @param SymfonyStyle $io I/O helper object.
+     * @param QueryBuilder $query Query object.
+     * @return void
+     */
+    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    {
+        $result = $query->execute()->fetch();
+
+        $io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
+            $result[ 'book' ], $result[ 'page' ] ) );
+        $io->text( $result[ 'description' ] );
+        $io->newLine();
     }
 }

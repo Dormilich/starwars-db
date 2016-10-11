@@ -97,7 +97,10 @@ class Set extends Command
             if ( $output->isVerbose() ) {
                 $io->listing( $e->getTrace() );
             }
+            exit( 1 );
         }
+
+        exit( 0 );
     }
 
     /**
@@ -115,8 +118,8 @@ class Set extends Command
             ->select( 'n.id' )
             ->from( 'Node', 'n' )
             ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
-            ->andWhere( 'n.name = :name' )
-            ->andWhere( 't.name = :type' )
+            ->andWhere( 'n.name LIKE :name' )
+            ->andWhere( 't.name LIKE :type' )
             ->setParameter( ':name', $name, 'string' )
             ->setParameter( ':type', $type, 'string' )
             ->execute()
@@ -182,7 +185,7 @@ class Set extends Command
         return $this->db->createQueryBuilder()
             ->select( 'id' )
             ->from( 'Book' )
-            ->where( 'abbreviation = :name' )
+            ->where( 'abbreviation LIKE :name' )
             ->setParameter( ':name', $abbr, 'string' )
             ->execute()
             ->fetchColumn()

@@ -62,6 +62,7 @@ class Find extends Command
     {
         $name = $input->getArgument( 'name' );
         $type = $input->getOption( 'type' );
+        $type = $this->getType( $type );
 
         $io = new SymfonyStyle( $input, $output );
         $query = $this->getQuery( $type, $name );
@@ -71,6 +72,26 @@ class Find extends Command
         }
 
         $this->renderResult( $io, $query );
+
+        exit( 0 );
+    }
+
+    /**
+     * Get the type id from the type name. Returns `0` if there is no such type.
+     * 
+     * @param string $type Entry type name.
+     * @return integer Entry type id.
+     */
+    private function getType( $type )
+    {
+        return (int) $this->db->createQueryBuilder()
+            ->select( 'id' )
+            ->from( 'NodeType' )
+            ->where( 'name LIKE :name' )
+            ->setParameter( ':name', $type, 'string' )
+            ->execute()
+            ->fetchColumn()
+        ;
     }
 
     /**
@@ -96,7 +117,7 @@ class Find extends Command
                 'n.book = b.id'
             )
             ->innerJoin( 'n', 'NodeType', 't', 
-                'n.type = t.id' . ( $type ? ' AND t.name = ' . $type : '' )
+                'n.type = t.id' . ( $type ? ' AND t.id = ' . $type : '' )
             )
             ->where( 'n.name LIKE :name' )
             ->setParameter( ':name', '%'.$name.'%', 'string' )
