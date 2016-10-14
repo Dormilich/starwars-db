@@ -2,7 +2,7 @@
 
 use Phinx\Seed\AbstractSeed;
 
-class AddEntryTypes extends AbstractSeed
+class AddNodeTypes extends AbstractSeed
 {
     /**
      * Run Method.
@@ -37,6 +37,8 @@ class AddEntryTypes extends AbstractSeed
                 'name' => 'Secret',
             ], [
                 'name' => 'Action',
+            ], [
+                'name' => 'Bonus',
             ]
         ] );
     }
