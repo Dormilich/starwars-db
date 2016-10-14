@@ -87,10 +87,10 @@ class Add extends Command
             if ( $output->isVerbose() ) {
                 $io->listing( $e->getTrace() );
             }
-            exit( 1 );
+            return 1;
         }
 
-        exit( 0 );
+        return 0;
     }
 
     /**

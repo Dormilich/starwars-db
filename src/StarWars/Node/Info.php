@@ -71,7 +71,7 @@ class Info extends Command
             $io->note( 'There is no such entry in the database' );
         }
 
-        exit( 0 );
+        return 0;
     }
 
     /**

@@ -73,7 +73,7 @@ class Find extends Command
 
         $this->renderResult( $io, $query );
 
-        exit( 0 );
+        return 0;
     }
 
     /**

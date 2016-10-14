@@ -78,7 +78,7 @@ class Set extends Command
 
             if ( ! $id ) {
                 $io->note( 'There is no such entry in the database' );
-                exit( 0 );
+                return 0;
             }
 
             $data = [];
@@ -97,10 +97,10 @@ class Set extends Command
             if ( $output->isVerbose() ) {
                 $io->listing( $e->getTrace() );
             }
-            exit( 1 );
+            return 1;
         }
 
-        exit( 0 );
+        return 0;
     }
 
     /**
