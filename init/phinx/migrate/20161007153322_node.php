@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class CreateNode extends AbstractMigration
+class Node extends AbstractMigration
 {
     public function change()
     {

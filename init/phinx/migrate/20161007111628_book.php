@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class CreateBook extends AbstractMigration
+class Book extends AbstractMigration
 {
     public function change()
     {
