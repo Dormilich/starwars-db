@@ -11,7 +11,7 @@ class Dependency extends AbstractMigration
             // requirement for `node`
             ->addColumn( 'depends', 'integer' )
             // optional: limiting value (e.g. DEX 13)
-            ->addColumn( 'value', 'string', [
+            ->addColumn( 'value', 'text', [
                 'null' => true,
             ])
             // if there is a 'one of' dependency
