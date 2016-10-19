@@ -21,6 +21,11 @@ class Set extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -70,14 +75,21 @@ class Set extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
         try {
             $id = $this->getEntry( $input );
 
             if ( ! $id ) {
-                $io->note( 'There is no such entry in the database' );
+                $this->io->note( 'There is no such entry in the database' );
                 return 0;
             }
 
@@ -90,12 +102,12 @@ class Set extends Command
             $this->updateEntry( $id, $data );
 
             $query = $this->getQuery( $id );
-            $this->renderResult( $io, $query );
+            $this->renderResult( $query );
 
         } catch (Exception $e) {
-            $io->error( $e->getMessage() );
+            $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
-                $io->listing( $e->getTrace() );
+                $this->io->listing( $e->getTrace() );
             }
             return 1;
         }
@@ -238,17 +250,17 @@ class Set extends Command
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $io I/O helper object.
+     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    private function renderResult( QueryBuilder $query )
     {
         $result = $query->execute()->fetch();
 
-        $io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
+        $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
             $result[ 'book' ], $result[ 'page' ] ) );
-        $io->text( $result[ 'description' ] );
-        $io->newLine();
+        $this->io->text( $result[ 'description' ] );
+        $this->io->newLine();
     }
 }

@@ -18,6 +18,11 @@ class Info extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -58,17 +63,24 @@ class Info extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
         $id = $this->getEntry( $input );
 
         if ( $id > 0 ) {
             $query = $this->getQuery( $id );
-            $this->renderResult( $io, $query );
+            $this->renderResult( $query );
         }
         else {
-            $io->note( 'There is no such entry in the database' );
+            $this->io->note( 'There is no such entry in the database' );
         }
 
         return 0;
@@ -125,17 +137,17 @@ class Info extends Command
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $io I/O helper object.
+     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    private function renderResult( QueryBuilder $query )
     {
         $result = $query->execute()->fetch();
 
-        $io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
+        $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
             $result[ 'book' ], $result[ 'page' ] ) );
-        $io->text( $result[ 'description' ] );
-        $io->newLine();
+        $this->io->text( $result[ 'description' ] );
+        $this->io->newLine();
     }
 }

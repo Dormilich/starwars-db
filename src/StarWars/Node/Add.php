@@ -22,6 +22,11 @@ class Add extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -68,9 +73,16 @@ class Add extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
         try {
             $name = $input->getArgument( 'name' );
             $type = $this->inputType( $input );
@@ -80,12 +92,12 @@ class Add extends Command
             $id = $this->createEntry( $type, $name, $book, $page );
 
             $query = $this->getQuery( $id );
-            $this->renderResult( $io, $query );
+            $this->renderResult( $query );
 
         } catch (Exception $e) {
-            $io->error( $e->getMessage() );
+            $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
-                $io->listing( $e->getTrace() );
+                $this->io->listing( $e->getTrace() );
             }
             return 1;
         }
@@ -248,13 +260,13 @@ class Add extends Command
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $io I/O helper object.
+     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    private function renderResult( QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();
-        $io->table( [ 'Type', 'Name', 'Book', 'Page' ], $result );
+        $this->io->table( [ 'Type', 'Name', 'Book', 'Page' ], $result );
     }
 }

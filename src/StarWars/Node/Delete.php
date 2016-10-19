@@ -19,6 +19,11 @@ class Delete extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -55,16 +60,23 @@ class Delete extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
         $id = $this->getEntry( $input );
 
         if ( $id > 0 ) {
             $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );
         }
         else {
-            $io->note( 'There is no such entry in the database' );
+            $this->io->note( 'There is no such entry in the database' );
         }
 
         return 0;

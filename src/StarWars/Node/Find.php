@@ -19,6 +19,11 @@ class Find extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -58,20 +63,27 @@ class Find extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         $name = $input->getArgument( 'name' );
         $type = $input->getOption( 'type' );
         $type = $this->getType( $type );
 
-        $io = new SymfonyStyle( $input, $output );
         $query = $this->getQuery( $type, $name );
 
         if ( $input->getOption( 'descr' ) ) {
             $query->orWhere( 'n.description LIKE :name' );
         }
 
-        $this->renderResult( $io, $query );
+        $this->renderResult( $query );
 
         return 0;
     }
@@ -127,19 +139,19 @@ class Find extends Command
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $io I/O helper object.
+     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    private function renderResult( QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();
 
         if ( count( $result ) > 0 ) {
-            $io->table( [ 'Name', 'Type', 'Book', 'Page' ], $result );
+            $this->io->table( [ 'Name', 'Type', 'Book', 'Page' ], $result );
         }
         else {
-            $io->note( 'Sorry, no matching entries found.' );
+            $this->io->note( 'Sorry, no matching entries found.' );
         }
     }
 }
