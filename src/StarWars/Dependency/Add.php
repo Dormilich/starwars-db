@@ -22,6 +22,11 @@ class Add extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -41,7 +46,7 @@ class Add extends Command
     {
         $this
             ->setName(
-                'entry:depends'
+                'dependency:add'
             )
             ->setDescription(
                 'Add a dependency of an entry'
@@ -67,23 +72,30 @@ class Add extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
-
         $name = $input->getArgument( 'name' );
         $type = $input->getArgument( 'type' );
+
         $id = $this->getEntry( $type, $name );
 
         if ( $id === 0 ) {
-            $io->note( 'There is no such entry in the database' );
+            $this->io->note( 'There is no such entry in the database' );
             return 0;
         }
 
         $deps = $input->getOption( 'dep' );
 
         if ( count( $deps ) === 0 ) {
-            $io->note( 'There are no dependencies to add.' );
+            $this->io->note( 'There are no dependencies to add.' );
             return 0;
         }
 
@@ -92,10 +104,10 @@ class Add extends Command
 
             array_walk( $deps, [ $this, 'saveDependency' ] );
 
-        } catch (Exception $e) {
-            $io->error( $e->getMessage() );
+        } catch ( Exception $e ) {
+            $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
-                $io->listing( $e->getTrace() );
+                $this->io->listing( $e->getTrace() );
             }
             return 1;
         }
@@ -135,14 +147,14 @@ class Add extends Command
     {
         array_walk( $deps, function ( &$value, $key, $entry ) {
             if ( preg_match( '/^(\w+):(.+)( \[(.+)\])?$/', $value, $match ) === 0 ) {
-                throw new \UnexpectedValueException( 'Invalid entry format for ' . $value );
+                throw new UnexpectedValueException( 'Invalid entry format for ' . $value );
             }
 
             $id = $this->getEntry( $match[ 1 ], $match[ 2 ] );
 
             if ( $id === 0 ) {
                 $msg = ucfirst( $match[ 1 ] ) . ' ' . $match[ 2 ] . ' not found.';
-                throw new \UnexpectedValueException( $msg );
+                throw new UnexpectedValueException( $msg );
             }
 
             $value = [
@@ -201,6 +213,6 @@ class Add extends Command
             return $this->db->lastInsertId();
         }
 
-        throw new \RuntimeException( 'Failed to add dependency.' );
+        throw new RuntimeException( 'Failed to add dependency.' );
     }
 }

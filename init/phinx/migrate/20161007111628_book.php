@@ -8,6 +8,7 @@ class Book extends AbstractMigration
     {
         $this->table( 'Book' )
             ->addColumn( 'title', 'text' )
+            ->addColumn( 'short', 'text' )
             ->addColumn( 'abbreviation', 'text' )
             ->addColumn( 'isbn', 'text' )
             ->addColumn( 'authors', 'text' )

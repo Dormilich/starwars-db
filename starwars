@@ -18,5 +18,8 @@ $app->add( new StarWars\Node\Info( $db ) );
 $app->add( new StarWars\Node\Add( $db ) );
 $app->add( new StarWars\Node\Set( $db ) );
 $app->add( new StarWars\Node\Delete( $db ) );
+$app->add( new StarWars\Node\Depends( $db ) );
+
+$app->add( new StarWars\Dependency\Add( $db ) );
 
 $app->run();

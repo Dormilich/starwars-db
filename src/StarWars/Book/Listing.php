@@ -18,6 +18,11 @@ class Listing extends Command
     protected $db;
 
     /**
+     * @var SymfonyStyle $io Output formatter.
+     */
+    protected $io;
+
+    /**
      * Set up the command.
      * 
      * @param Connection $db DBAL connection object.
@@ -51,16 +56,23 @@ class Listing extends Command
     /**
      * @inheritDoc
      */
+    protected function initialize( InputInterface $input, OutputInterface $output )
+    {
+        $this->io = new SymfonyStyle( $input, $output );
+    }
+
+    /**
+     * @inheritDoc
+     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $io = new SymfonyStyle( $input, $output );
         $query = $this->getQuery();
 
         if ( $name = $input->getArgument( 'name' ) ) {
             $this->setLookupName( $query, $name );
         }
 
-        $this->renderResult( $io, $query );
+        $this->renderResult( $query );
 
         return 0;
     }
@@ -103,13 +115,13 @@ class Listing extends Command
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $io I/O helper object.
+     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( SymfonyStyle $io, QueryBuilder $query )
+    private function renderResult( QueryBuilder $query )
     {
         $result = $query->execute()->fetchAll();
-        $io->table( [ 'Abbr.', 'Title', 'ISBN', 'Authors' ], $result );
+        $this->io->table( [ 'Abbr.', 'Title', 'ISBN', 'Authors' ], $result );
     }
 }
