@@ -80,11 +80,17 @@ class Depends extends Command
             return 0;
         }
 
+        $formatter = $output->isVerbose() 
+            ? new NodeNameRefFormatter 
+            : new NodeNameFormatter
+        ;
+
         $root = $this->queryNode( $id );
-        $root->setFormatter( new NodeNameRefFormatter );
+        $root->setFormatter( $formatter );
+        
         $tree = new Tree( $root, $this->io );
 
-        $dep = $this->addDependencies( $tree );
+        $this->addDependencies( $tree );
 
         $tree->render();
 
@@ -128,26 +134,31 @@ class Depends extends Command
         ;
     }
 
+    /**
+     * Recursively add dependencies.
+     * 
+     * @param Tree $tree Composite object.
+     * @return Tree
+     */
     private function addDependencies( Tree $tree )
     {
         $id = $tree->getKey();
+
         $dep = $this->getDependencies( $id );
+        $dep = array_map( [$this, 'queryNode'], $dep );
+        array_walk( $dep, [$tree, 'addChild'] );
 
-        foreach ($dep as $dep_id) {
-            $node = $this->queryNode( $dep_id );
-            $tree->addChild( $node );
-        }
+        $children = $tree->getChildren();
+        array_walk( $children, [$this, 'addDependencies'] );
 
-        foreach ($tree as $child) {
-            $this->addDependencies( $child );
-        }
+        return $tree;
     }
 
     /**
-     * Get the updated entry’s data.
+     * Get the node object for the given entry.
      * 
      * @param integer $id Entry id.
-     * @return QueryBuilder
+     * @return Node
      */
     private function queryNode( $id )
     {
@@ -167,6 +178,7 @@ class Depends extends Command
             ->setParameter( 0, $id, 'integer' )
             ->execute()
         ;
+        // classes cannot be set in fetch()
         $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\Node' );
 
         return $stmt->fetch();
