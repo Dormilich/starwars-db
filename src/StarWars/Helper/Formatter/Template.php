@@ -48,25 +48,19 @@ class Template implements FormatterInterface
     protected $close;
 
     /**
-     * @var array $errors List of error messages.
-     */
-    protected $errors = [];
-
-    /**
      * Create instance.
      * 
      * If no closing delimiter is passed, the same string as for the opening 
      * delimiter is used.
      * 
      * @param string $template The template to populate.
-     * @param string $open Placeholder opening delimiter.
-     * @param string $close Placeholder closing delimiter.
+     * @param string $tag Example placeholder.
      * @return self
      * @throws RuntimeException Ambiguous placeholders found.
      */
-    public function __construct( $template, $open, $close = null )
+    public function __construct( $template, $tag )
     {
-        $this->setDelimiters( $open, $close );
+        $this->setDelimiters( $tag );
         $this->setTemplate( $template );
     }
 
@@ -95,19 +89,18 @@ class Template implements FormatterInterface
     /**
      * Set the opening and closing delimiters of the placeholders.
      * 
-     * @param string $open Opening placeholder delimiter.
-     * @param string $close Closing placeholder delimiter.
+     * @param string $tag Example placeholder.
      * @return void
+     * @throws RuntimeException Placeholder parse failure.
      */
-    protected function setDelimiters( $open, $close )
+    protected function setDelimiters( $tag )
     {
-        $this->open = (string) $open;
-
-        if ( null === $close ) {
-            $this->close = $this->open;
-        } 
+        if ( preg_match( '/(\W+)\w+(\W+)/', $tag, $match ) ) {
+            list( $tag, $this->open, $this->close ) = $match;
+        }
         else {
-            $this->close = (string) $close;
+            $msg = 'Could not determine the placeholder delimiters';
+            throw new RuntimeException( $msg );
         }
     }
 
@@ -120,8 +113,7 @@ class Template implements FormatterInterface
      * correctly assigns the placeholder value.
      * 
      * @param string $offset Key candidate.
-     * @return string Key.
-     * @throws RuntimeException Unknown placeholder key.
+     * @return string|false Key.
      */
     protected function findKey( $offset )
     {
@@ -129,14 +121,15 @@ class Template implements FormatterInterface
             return $offset;
         }
         // UTF-8
+        $offset = mb_strtolower( $offset, 'UTF-8' );
+
         foreach ( $this->keys as $key ) {
-            if ( mb_strtolower( $key, 'UTF-8' ) === mb_strtolower( $offset, 'UTF-8' ) ) {
+            if ( mb_strtolower( $key, 'UTF-8' ) === $offset ) {
                 return $key;
             }
         }
 
-        $msg = sprintf( 'Placeholder name "%s" does not exist in the template.', $offset );
-        throw new RuntimeException( $msg );
+        return false;
     }
 
     /**
@@ -151,12 +144,8 @@ class Template implements FormatterInterface
      */
     public function assign( $key, $value )
     {
-        try {
-            $key = $this->findKey( $key );
-            $this->data[ $key ] = (string) $value;
-        }
-        catch ( RuntimeException $exc ) {
-            $this->errors[] = $exc->getMessage();
+        if ( false !== $offset = $this->findKey( $key ) ) {
+            $this->data[ $offset ] = (string) $value;
         }
 
         return $this;
@@ -166,7 +155,7 @@ class Template implements FormatterInterface
      * Populate the template with data and reset the placeholder value array.
      * 
      * @param array $values (optional) Template values.
-     * @return string|array The populated template(s).
+     * @return string The populated template.
      */
     public function render( array $values = [] )
     {
@@ -176,8 +165,7 @@ class Template implements FormatterInterface
         }
         // set default values (if any)
         if ( false !== $this->defaultValue ) {
-            $defaults = $this->getDefaultPlaceholders( $this->defaultValue );
-            $this->data = array_replace( $defaults, $this->data );
+            $this->data += $this->getDefaultPlaceholders( $this->defaultValue );
         }
         // prepare arguments
         $placeholders = array_map( [$this, 'createPlaceholder'], array_keys( $this->data ) );
@@ -242,29 +230,5 @@ class Template implements FormatterInterface
     {
         $defaults = array_fill( 0, count( $this->keys ), (string) $default );
         return array_combine( $this->keys, $defaults );
-    }
-
-    /**
-     * Get all encountered errors and clear the internal error array.
-     * 
-     * @return array List of error messages.
-     */
-    public function getErrors()
-    {
-        $errors = $this->errors;
-        $this->errors = [];
-
-        return $errors;
-    }
-
-    /**
-     * Get the last error message. If no errors occurred FALSE is returned, 
-     * which can be used to check if an error occurred at all.
-     * 
-     * @return string The last error message or FALSE.
-     */
-    public function getLastError()
-    {
-        return end( $this->errors );
     }
 }

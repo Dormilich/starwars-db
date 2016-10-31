@@ -15,7 +15,7 @@ class Node
 
     protected $formatter;
 
-    public function id()
+    public function key()
     {
         return (int) $this->id;
     }
@@ -38,5 +38,10 @@ class Node
             'book' => $this->book,
             'page' => $this->page,
         ] );
+    }
+
+    public function __toString()
+    {
+        return $this->render();
     }
 }
