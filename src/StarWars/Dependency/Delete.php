@@ -112,7 +112,7 @@ class Delete extends Command
         } catch ( Exception $e ) {
             $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
-                $this->io->listing( $e->getTrace() );
+                $this->io->writeln( $e->getTraceAsString() );
             }
             return 1;
         }
