@@ -2,39 +2,16 @@
 
 namespace StarWars\Node;
 
-use Doctrine\DBAL\Connection;
+use Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Symfony\Component\Console\Command\Command;
+use StarWars\Entry;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
-class Info extends Command
+class Info extends Entry
 {
-    /**
-     * @var Connection $db DBAL connection object.
-     */
-    protected $db;
-
-    /**
-     * @var SymfonyStyle $io Output formatter.
-     */
-    protected $io;
-
-    /**
-     * Set up the command.
-     * 
-     * @param Connection $db DBAL connection object.
-     * @return self
-     */
-    public function __construct( Connection $db )
-    {
-        $this->db = $db;
-
-        parent::__construct();
-    }
-
     /**
      * @inheritDoc
      */
@@ -51,21 +28,13 @@ class Info extends Command
                 'An entry is the basic information item in Star Wars Saga Edition. '.
                 'It can be a Skill, Feat, Talent, Ability, etc.'
             )
-            ->addArgument( 'type', InputArgument::REQUIRED, 
-                'Name of the entry’s type'
-            )
             ->addArgument( 'name', InputArgument::REQUIRED, 
                 'Name of the entry'
             )
+            ->addOption( 'type', 't', InputOption::VALUE_REQUIRED, 
+                'Type of the entry'
+            )
         ;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function initialize( InputInterface $input, OutputInterface $output )
-    {
-        $this->io = new SymfonyStyle( $input, $output );
     }
 
     /**
@@ -73,57 +42,40 @@ class Info extends Command
      */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $id = $this->getEntry( $input );
+        try {
+            $name = $input->getArgument( 'name' );
+            $type = $input->getOption( 'type' );
 
-        if ( $id > 0 ) {
-            $query = $this->getQuery( $id );
-            $this->renderResult( $query );
+            $id = $this->getEntry( $type, $name );
+
+            if ( ! $id ) {
+                throw new Exception( 'There is no such entry in the database' );
+            }
+
+            $result = $this->getResult( $id );
+            $this->renderResult( $result );
         }
-        else {
-            $this->io->note( 'There is no such entry in the database' );
+        catch ( Exception $e ) {
+            $this->io->note( $e->getMessage() );
         }
 
         return 0;
     }
 
     /**
-     * Get the entry id from the provided input. Returns `0` if there is no match.
-     * 
-     * @param InputInterface $input Input object.
-     * @return integer Entry id.
-     */
-    private function getEntry( InputInterface $input )
-    {
-        $name = $input->getArgument( 'name' );
-        $type = $input->getArgument( 'type' );
-
-        return (int) $this->db->createQueryBuilder()
-            ->select( 'n.id' )
-            ->from( 'Node', 'n' )
-            ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
-            ->andWhere( 'n.name LIKE :name' )
-            ->andWhere( 't.name LIKE :type' )
-            ->setParameter( ':name', $name, 'string' )
-            ->setParameter( ':type', $type, 'string' )
-            ->execute()
-            ->fetchColumn()
-        ;
-    }
-
-    /**
      * Get the updated entry’s data.
      * 
      * @param integer $id Entry id.
-     * @return QueryBuilder
+     * @return array
      */
-    private function getQuery( $id )
+    private function getResult( $id )
     {
         return $this->db->createQueryBuilder()
             ->select( [
                 'n.name',
                 't.name AS type',
                 'n.description',
-                'b.abbreviation AS book',
+                'b.short AS book',
                 'n.page',
             ] )
             ->from( 'Node', 'n' )
@@ -131,23 +83,22 @@ class Info extends Command
             ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
             ->where( 'n.id = :id' )
             ->setParameter( ':id', $id, 'integer' )
+            ->execute()
+            ->fetch()
         ;
     }
 
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $this->io I/O helper object.
-     * @param QueryBuilder $query Query object.
+     * @param array $result Entry data.
      * @return void
      */
-    private function renderResult( QueryBuilder $query )
+    private function renderResult( array $result )
     {
-        $result = $query->execute()->fetch();
+        $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], 
+            $result[ 'type' ], $result[ 'book' ], $result[ 'page' ] ) );
 
-        $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], $result[ 'type' ], 
-            $result[ 'book' ], $result[ 'page' ] ) );
         $this->io->text( $result[ 'description' ] );
-        $this->io->newLine();
     }
 }

@@ -5,40 +5,15 @@ namespace StarWars\Node;
 use Exception;
 use RuntimeException;
 use UnexpectedValueException;
-use Doctrine\DBAL\Connection;
+use StarWars\Entry;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
-class Add extends Command
+class Add extends Entry
 {
-    /**
-     * @var Connection $db DBAL connection object.
-     */
-    protected $db;
-
-    /**
-     * @var SymfonyStyle $io Output formatter.
-     */
-    protected $io;
-
-    /**
-     * Set up the command.
-     * 
-     * @param Connection $db DBAL connection object.
-     * @return self
-     */
-    public function __construct( Connection $db )
-    {
-        $this->db = $db;
-
-        parent::__construct();
-    }
-
     /**
      * @inheritDoc
      */
@@ -73,14 +48,6 @@ class Add extends Command
     /**
      * @inheritDoc
      */
-    protected function initialize( InputInterface $input, OutputInterface $output )
-    {
-        $this->io = new SymfonyStyle( $input, $output );
-    }
-
-    /**
-     * @inheritDoc
-     */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
         try {
@@ -94,7 +61,8 @@ class Add extends Command
             $query = $this->getQuery( $id );
             $this->renderResult( $query );
 
-        } catch (Exception $e) {
+        }
+        catch ( Exception $e ) {
             $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
                 $this->io->writeln( $e->getTraceAsString() );

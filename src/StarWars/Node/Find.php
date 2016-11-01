@@ -2,40 +2,15 @@
 
 namespace StarWars\Node;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Symfony\Component\Console\Command\Command;
+use StarWars\Entry;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
-class Find extends Command
+class Find extends Entry
 {
-    /**
-     * @var Connection $db DBAL connection object.
-     */
-    protected $db;
-
-    /**
-     * @var SymfonyStyle $io Output formatter.
-     */
-    protected $io;
-
-    /**
-     * Set up the command.
-     * 
-     * @param Connection $db DBAL connection object.
-     * @return self
-     */
-    public function __construct( Connection $db )
-    {
-        $this->db = $db;
-
-        parent::__construct();
-    }
-
     /**
      * @inheritDoc
      */
@@ -58,14 +33,6 @@ class Find extends Command
                 'Extend lookup to the entry description'
             )
         ;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function initialize( InputInterface $input, OutputInterface $output )
-    {
-        $this->io = new SymfonyStyle( $input, $output );
     }
 
     /**
