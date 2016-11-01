@@ -5,9 +5,10 @@ namespace StarWars\Node;
 use PDO;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use StarWars\Helper\Fork;
 use StarWars\Helper\Tree;
-use StarWars\Helper\Formatter\NodeNameFormatter;
-use StarWars\Helper\Formatter\NodeNameRefFormatter;
+use StarWars\Helper\Formatter\DependencyFormatter;
+use StarWars\Helper\Formatter\DependencyRefFormatter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -81,9 +82,10 @@ class Depends extends Command
         }
 
         $formatter = $output->isVerbose() 
-            ? new NodeNameRefFormatter 
-            : new NodeNameFormatter
+            ? new DependencyRefFormatter 
+            : new DependencyFormatter
         ;
+        $formatter->defaultValue = '';
 
         $root = $this->queryNode( $id );
         $root->setFormatter( $formatter );
@@ -121,16 +123,50 @@ class Depends extends Command
         ;
     }
 
-    // keep it simple for now
+    /**
+     * Get the dependencies that are not part of a group.
+     * 
+     * @param integer $id 
+     * @return array
+     */
     private function getDependencies( $id )
     {
         return $this->db->createQueryBuilder()
-            ->select( 'depends' )
+            ->select(
+                'depends',
+                'min_value',
+                'min_count'
+            )
             ->from( 'Dependency' )
-            ->where( 'node = ?' )
+            ->andWhere( 'group_id IS NULL' )
+            ->andWhere( 'node = ?' )
             ->setParameter( 0, $id, 'integer' )
             ->execute()
-            ->fetchAll( PDO::FETCH_COLUMN )
+            ->fetchAll()
+        ;
+    }
+
+    /**
+     * Get the dependencies that are part of a group.
+     * 
+     * @param integer $id 
+     * @return array
+     */
+    private function getGroupDependencies( $id )
+    {
+        return $this->db->createQueryBuilder()
+            ->select(
+                'group_id',
+                'depends',
+                'min_value',
+                'min_count'
+            )
+            ->from( 'Dependency' )
+            ->andWhere( 'group_id IS NOT NULL' )
+            ->andWhere( 'node = ?' )
+            ->setParameter( 0, $id, 'integer' )
+            ->execute()
+            ->fetchAll( PDO::FETCH_GROUP )
         ;
     }
 
@@ -145,13 +181,54 @@ class Depends extends Command
         $id = $tree->getKey();
 
         $dep = $this->getDependencies( $id );
-        $dep = array_map( [$this, 'queryNode'], $dep );
+        $dep = $this->addNodes( $dep );
+
         array_walk( $dep, [$tree, 'addChild'] );
 
         $children = $tree->getChildren();
         array_walk( $children, [$this, 'addDependencies'] );
 
+        $this->addGroupDependencies( $tree );
+
         return $tree;
+    }
+
+    /**
+     * Add dependency groups. Note that these dependencies are not resolved 
+     * further even if a member of the group had dependencies.
+     * 
+     * @param Tree $tree 
+     * @return Tree
+     */
+    private function addGroupDependencies( Tree $tree )
+    {
+        $id = $tree->getKey();
+
+        $group = $this->getGroupDependencies( $id );
+
+        foreach ($group as $gid => $items ) {
+            $nodes = $this->addNodes( $items );
+            $tree->addChild( new Fork( $nodes ) );
+        }
+
+        return $tree;
+    }
+
+    /**
+     * Add data objects to the data array.
+     * 
+     * @param array $data 
+     * @return array
+     */
+    private function addNodes( array $data )
+    {
+        return array_map( function ( array $row ) {
+            $node = $this->queryNode( $row[ 'depends' ] );
+            $node->setLimit( $row[ 'min_value' ] );
+            $node->setAmount( $row[ 'min_count' ] );
+
+            return $node;
+        }, $data );
     }
 
     /**
@@ -168,7 +245,7 @@ class Depends extends Command
                 'n.name',
                 't.name AS type',
                 'n.description',
-                'b.abbreviation AS book',
+                'b.short AS book',
                 'n.page',
             ] )
             ->from( 'Node', 'n' )
@@ -179,7 +256,7 @@ class Depends extends Command
             ->execute()
         ;
         // classes cannot be set in fetch()
-        $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\Node' );
+        $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\DepNode' );
 
         return $stmt->fetch();
     }

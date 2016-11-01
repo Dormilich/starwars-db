@@ -2,6 +2,7 @@
 
 namespace StarWars\Helper;
 
+use StarWars\Helper\Formatter\RenderInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Tree extends Composite
@@ -43,7 +44,7 @@ class Tree extends Composite
      * @param OutputInterface $output 
      * @return self
      */
-    public function __construct( Node $node, OutputInterface $output )
+    public function __construct( RenderInterface $node, OutputInterface $output )
     {
         $this->branch = $node;
         $this->output = $output;
@@ -55,7 +56,7 @@ class Tree extends Composite
      * @param Node $node 
      * @return void
      */
-    public function addChild( Node $node )
+    public function addChild( RenderInterface $node )
     {
         $formatter = $this->branch->getFormatter();
         $node->setFormatter( $formatter );

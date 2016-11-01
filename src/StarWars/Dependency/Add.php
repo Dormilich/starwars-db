@@ -62,9 +62,16 @@ class Add extends Command
             ->addArgument( 'name', InputArgument::REQUIRED, 
                 'Name of the entry'
             )
-            ->addOption( 'dep', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
-                'Dependency of the entry in compact form (<type>:<name> [value]). '.
+            ->addOption( 'depends', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
+                'Dependency of the entry in compact form (<type>:<name>). '.
                 'If an entry has a one-of-several dependency, use this option multiple times.'
+            )
+            ->addOption( 'limit', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
+                'Minimum value for the n-th dependency. Cannot be combined with the `amount` option.'
+            )
+            ->addOption( 'amount', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
+                'The minimum amount of items from the collection when the n-th dependency is a tree. '.
+                'Cannot be combined with the `limit` option.'
             )
         ;
     }
@@ -92,7 +99,7 @@ class Add extends Command
             return 0;
         }
 
-        $deps = $input->getOption( 'dep' );
+        $deps = $input->getOption( 'depends' );
 
         if ( count( $deps ) === 0 ) {
             $this->io->note( 'There are no dependencies to add.' );
@@ -100,14 +107,31 @@ class Add extends Command
         }
 
         try {
-            $deps = $this->getDependencies( $id, $deps );
+            $deps = $this->getDependencies( $deps );
+            $count = count( $deps );
 
-            array_walk( $deps, [ $this, 'saveDependency' ] );
+            $ids = array_pad([], $count, $id );
+
+            $vals = $input->getOption( 'limit' );
+            $vals = array_pad( $vals, $count, null );
+
+            $amts = $input->getOption( 'amount' );
+            $amts = array_pad( $amts, $count, null );
+
+            $group = $count > 1 
+                ? $this->getNextDependencyGroup( $id ) 
+                : null
+            ;
+            $grps = array_pad( [], $count, $group );
+
+            $data = array_map( null, $ids, $deps, $vals, $amts, $grps );
+
+            array_walk( $data, [ $this, 'saveDependency' ] );
 
         } catch ( Exception $e ) {
             $this->io->error( $e->getMessage() );
             if ( $output->isVerbose() ) {
-                $this->io->listing( $e->getTrace() );
+                $this->io->writeln( $e->getTraceAsString() );
             }
             return 1;
         }
@@ -143,36 +167,25 @@ class Add extends Command
      * @param array $deps Entry names.
      * @return array Insert sets.
      */
-    private function getDependencies( $entry, array $deps )
+    private function getDependencies( array $deps )
     {
-        array_walk( $deps, function ( &$value, $key, $entry ) {
-            if ( preg_match( '/^(\w+):(.+)( \[(.+)\])?$/', $value, $match ) === 0 ) {
-                throw new UnexpectedValueException( 'Invalid entry format for ' . $value );
-            }
-
-            $id = $this->getEntry( $match[ 1 ], $match[ 2 ] );
-
-            if ( $id === 0 ) {
-                $msg = ucfirst( $match[ 1 ] ) . ' ' . $match[ 2 ] . ' not found.';
+        return array_map( function ( $value ) {
+            if ( ! strpos( $value, ':') ) {
+                $msg = 'Invalid entry format for ' . $value;
                 throw new UnexpectedValueException( $msg );
             }
 
-            $value = [
-                'node' => $entry,
-                'depends' => $id,
-            ];
-            if ( isset( $match[ 4 ] ) ) {
-                $value[ 'value' ] = $match[ 4 ];
+            list( $type, $name ) = explode( ':', $value );
+
+            $id = $this->getEntry( $type, $name );
+
+            if ( $id === 0 ) {
+                $msg = ucfirst( $type ) . ' ' . $name . ' not found.';
+                throw new UnexpectedValueException( $msg );
             }
-        }, $entry );
 
-        if ( count( $deps ) > 1 ) {
-            array_walk( $deps, function ( &$value, $key, $group ) {
-                $value[ 'dep_group' ] = $group;
-            }, $this->getNextDependencyGroup( $entry ) );
-        }
-
-        return  $deps;
+            return $id;
+        }, $deps );
     }
 
     /**
@@ -184,7 +197,7 @@ class Add extends Command
     private function getNextDependencyGroup( $entry )
     {
         return 1 + (int) $this->db->createQueryBuilder()
-            ->select( 'max(dep_group)' )
+            ->select( 'max(group_id)' )
             ->from( 'Dependency' )
             ->where( 'node = ?' )
             ->groupBy( 'node' )
@@ -200,19 +213,22 @@ class Add extends Command
      * @param array $data Insert set.
      * @return integer Primary key of the dependency.
      */
-    private function saveDependency( array $data )
+    private function saveDependency( array $row )
     {
+        $keys = [ 'node', 'depends', 'min_value', 'min_count', 'group_id' ];
+        $data = array_combine( $keys, $row );
+        $data = array_filter( $data );
+
         $ok = $this->db->insert( 'Dependency', $data, [
             'node' => 'integer',
-            'value' => 'string',
             'depends' => 'integer',
-            'dep_group' => 'integer',
+            'min_value' => 'integer',
+            'min_count' => 'integer',
+            'group_id' => 'integer',
         ] );
 
-        if ( $ok ) {
-            return $this->db->lastInsertId();
+        if ( ! $ok ) {
+            throw new RuntimeException( 'Failed to add dependency.' );
         }
-
-        throw new RuntimeException( 'Failed to add dependency.' );
     }
 }

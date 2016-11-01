@@ -36,7 +36,7 @@ class Composite implements Countable, Iterator
     public function remove( Composite $obj )
     {
         if ( false !== $key = array_search( $obj, $this->children, true ) ) {
-            array_splice( $this->children, $offset, 1 );
+            array_splice( $this->children, $key, 1 );
         }
 
         return $key;

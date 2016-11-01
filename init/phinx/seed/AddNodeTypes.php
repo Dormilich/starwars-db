@@ -10,8 +10,6 @@ class AddNodeTypes extends AbstractSeed
             [
                 'name' => 'Ability',
             ], [
-                'name' => 'Bonus',
-            ], [
                 'name' => 'Class',
             ], [
                 'name' => 'Feat',
@@ -29,6 +27,8 @@ class AddNodeTypes extends AbstractSeed
                 'name' => 'Technique',
             ], [
                 'name' => 'Tree',
+            ], [
+                'name' => 'Other',
             ]
         ] );
     }
