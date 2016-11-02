@@ -9,7 +9,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 $db = DriverManager::getConnection( [ 'url' => 'sqlite:///db.sqlite' ] );
 
-$app = new Application( 'Star Wars Saga Edition', '0.3' );
+$app = new Application( 'Star Wars Saga Edition', '0.4' );
 
 $app->add( new StarWars\Book\Listing( $db ) );
 
@@ -22,5 +22,8 @@ $app->add( new StarWars\Node\Depends( $db ) );
 
 $app->add( new StarWars\Dependency\Add( $db ) );
 $app->add( new StarWars\Dependency\Delete( $db ) );
+
+$app->add( new StarWars\Tree\Show( $db ) );
+$app->add( new StarWars\Tree\Add( $db ) );
 
 $app->run();
