@@ -20,7 +20,7 @@ class Template implements FormatterInterface
      * @var string $defaultValue A string that any found and unassigned 
      *          placeholder should use when rendering the template.
      */
-    public $defaultValue = false;
+    public $defaultValue = '';
 
     /**
      * @var string $tpl Template to process.

@@ -128,6 +128,36 @@ class Entry extends Command
     }
 
     /**
+     * Get the node object for the given entry.
+     * 
+     * @param integer $id Entry id.
+     * @return Node
+     */
+    protected function getNode( $id )
+    {
+        $stmt = $this->db->createQueryBuilder()
+            ->select( [
+                'n.id',
+                'n.name',
+                't.name AS type',
+                'n.description',
+                'b.short AS book',
+                'n.page',
+            ] )
+            ->from( 'Node', 'n' )
+            ->innerJoin( 'n', 'Book', 'b', 'n.book = b.id' )
+            ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
+            ->where( 'n.id = ?' )
+            ->setParameter( 0, $id, 'integer' )
+            ->execute()
+        ;
+        // classes cannot be set in fetch()
+        $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\DepNode' );
+
+        return $stmt->fetch();
+    }
+
+    /**
      * Print the error message to stdout.
      * 
      * @param Exception $e 

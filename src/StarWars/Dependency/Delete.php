@@ -37,7 +37,7 @@ class Delete extends Entry
             ->addArgument( 'name', InputArgument::REQUIRED, 
                 'Name of the entry'
             )
-            ->addOption( 'dep', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
+            ->addOption( 'item', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
                 'Dependency of the entry in compact form (<type>:<name>).'
             )
         ;
@@ -58,7 +58,7 @@ class Delete extends Entry
             return 0;
         }
 
-        $deps = $input->getOption( 'dep' );
+        $deps = $input->getOption( 'item' );
 
         try {
             $query = $this->db->createQueryBuilder()

@@ -55,9 +55,8 @@ class Depends extends Entry
             ? new DependencyRefFormatter 
             : new DependencyFormatter
         ;
-        $formatter->defaultValue = '';
 
-        $root = $this->queryNode( $id );
+        $root = $this->getNode( $id );
         $root->setFormatter( $formatter );
         
         $tree = new Tree( $root, $this->io );
@@ -67,53 +66,6 @@ class Depends extends Entry
         $tree->render();
 
         return 0;
-    }
-
-    /**
-     * Get the dependencies that are not part of a group.
-     * 
-     * @param integer $id 
-     * @return array
-     */
-    private function getDependencies( $id )
-    {
-        return $this->db->createQueryBuilder()
-            ->select( [
-                'depends',
-                'min_value',
-                'min_count',
-            ] )
-            ->from( 'Dependency' )
-            ->andWhere( 'group_id IS NULL' )
-            ->andWhere( 'node = ?' )
-            ->setParameter( 0, $id, 'integer' )
-            ->execute()
-            ->fetchAll()
-        ;
-    }
-
-    /**
-     * Get the dependencies that are part of a group.
-     * 
-     * @param integer $id 
-     * @return array
-     */
-    private function getGroupDependencies( $id )
-    {
-        return $this->db->createQueryBuilder()
-            ->select( [
-                'group_id',
-                'depends',
-                'min_value',
-                'min_count',
-            ] )
-            ->from( 'Dependency' )
-            ->andWhere( 'group_id IS NOT NULL' )
-            ->andWhere( 'node = ?' )
-            ->setParameter( 0, $id, 'integer' )
-            ->execute()
-            ->fetchAll( PDO::FETCH_GROUP )
-        ;
     }
 
     /**
@@ -169,7 +121,7 @@ class Depends extends Entry
     private function addNodes( array $data )
     {
         return array_map( function ( array $row ) {
-            $node = $this->queryNode( $row[ 'depends' ] );
+            $node = $this->getNode( $row[ 'depends' ] );
             $node->setLimit( $row[ 'min_value' ] );
             $node->setAmount( $row[ 'min_count' ] );
 
@@ -178,32 +130,49 @@ class Depends extends Entry
     }
 
     /**
-     * Get the node object for the given entry.
+     * Get the dependencies that are not part of a group.
      * 
-     * @param integer $id Entry id.
-     * @return Node
+     * @param integer $id 
+     * @return array
      */
-    private function queryNode( $id )
+    private function getDependencies( $id )
     {
-        $stmt = $this->db->createQueryBuilder()
+        return $this->db->createQueryBuilder()
             ->select( [
-                'n.id',
-                'n.name',
-                't.name AS type',
-                'n.description',
-                'b.short AS book',
-                'n.page',
+                'depends',
+                'min_value',
+                'min_count',
             ] )
-            ->from( 'Node', 'n' )
-            ->innerJoin( 'n', 'Book', 'b', 'n.book = b.id' )
-            ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
-            ->where( 'n.id = ?' )
+            ->from( 'Dependency' )
+            ->andWhere( 'group_id IS NULL' )
+            ->andWhere( 'node = ?' )
             ->setParameter( 0, $id, 'integer' )
             ->execute()
+            ->fetchAll()
         ;
-        // classes cannot be set in fetch()
-        $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\DepNode' );
+    }
 
-        return $stmt->fetch();
+    /**
+     * Get the dependencies that are part of a group.
+     * 
+     * @param integer $id 
+     * @return array
+     */
+    private function getGroupDependencies( $id )
+    {
+        return $this->db->createQueryBuilder()
+            ->select( [
+                'group_id',
+                'depends',
+                'min_value',
+                'min_count',
+            ] )
+            ->from( 'Dependency' )
+            ->andWhere( 'group_id IS NOT NULL' )
+            ->andWhere( 'node = ?' )
+            ->setParameter( 0, $id, 'integer' )
+            ->execute()
+            ->fetchAll( PDO::FETCH_GROUP )
+        ;
     }
 }

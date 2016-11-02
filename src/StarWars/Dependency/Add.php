@@ -37,7 +37,7 @@ class Add extends Entry
             ->addOption( 'type', 't', InputOption::VALUE_REQUIRED, 
                 'Type of the entry'
             )
-            ->addOption( 'depends', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
+            ->addOption( 'item', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
                 'Dependency of the entry in compact form (<type>:<name>). '.
                 'If an entry has a one-of-several dependency, use this option multiple times.'
             )
@@ -66,10 +66,10 @@ class Add extends Entry
                 throw new ErrorException( 'There is no such entry in the database.', 0, 2 );
             }
 
-            $deps = $input->getOption( 'depends' );
+            $deps = $input->getOption( 'item' );
             $count = count( $deps );
 
-            if ( ! $count ) {
+            if ( $count === 0 ) {
                 throw new ErrorException( 'There are no dependencies to add.', 0, 0 );
             }
 
