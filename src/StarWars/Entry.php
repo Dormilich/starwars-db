@@ -3,7 +3,8 @@
 namespace StarWars;
 
 use PDO;
-use RuntimeException;
+use Exception;
+use ErrorException;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -104,7 +105,7 @@ class Entry extends Command
 
         $msg = 'Found %d entries (%s) for %s';
         $msg = sprintf( $msg, $count, implode( ', ', $entries), $name );
-        throw new RuntimeException( $msg );
+        throw new ErrorException( $msg, 0, 1 );
     }
 
     /**
@@ -124,5 +125,27 @@ class Entry extends Command
             ->execute()
             ->fetchAll( PDO::FETCH_KEY_PAIR )
         ;
+    }
+
+    /**
+     * Print the error message to stdout.
+     * 
+     * @param Exception $e 
+     * @return void
+     */
+    protected function printError( Exception $e )
+    {
+        $method = ['note', 'caution', 'warning', 'error'];
+        $severity = 3;
+
+        if ( $e instanceof ErrorException ) {
+            $severity = min( 3, $e->getSeverity() );
+        }
+
+        call_user_func( [$this->io, $method[ $severity ]], $e->getMessage() );
+
+        if ( $this->io->isVerbose() ) {
+            $this->io->writeln( $e->getTraceAsString() );
+        }
     }
 }

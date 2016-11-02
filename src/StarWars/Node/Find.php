@@ -86,7 +86,7 @@ class Find extends Entry
             ->select( [
                 'n.name',
                 't.name AS type',
-                'b.abbreviation',
+                'b.short',
                 'n.page',
             ] )
             ->from(
@@ -99,6 +99,7 @@ class Find extends Entry
                 'n.type = t.id' . ( $type ? ' AND t.id = ' . $type : '' )
             )
             ->where( 'n.name LIKE :name' )
+            ->orderBy( 'b.id', 'asc' )
             ->setParameter( ':name', '%'.$name.'%', 'string' )
         ;
     }

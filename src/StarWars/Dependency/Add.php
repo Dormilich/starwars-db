@@ -3,6 +3,7 @@
 namespace StarWars\Dependency;
 
 use Exception;
+use ErrorException;
 use RuntimeException;
 use UnexpectedValueException;
 use StarWars\Entry;
@@ -62,16 +63,14 @@ class Add extends Entry
             $id = $this->getEntry( $type, $name );
 
             if ( ! $id ) {
-                $this->io->note( 'There is no such entry in the database' );
-                return 0;
+                throw new ErrorException( 'There is no such entry in the database.', 0, 2 );
             }
 
             $deps = $input->getOption( 'depends' );
             $count = count( $deps );
 
-            if ( $count === 0 ) {
-                $this->io->note( 'There are no dependencies to add.' );
-                return 0;
+            if ( ! $count ) {
+                throw new ErrorException( 'There are no dependencies to add.', 0, 0 );
             }
 
             $deps = $this->getDependencies( $deps );
@@ -95,10 +94,7 @@ class Add extends Entry
             array_walk( $data, [ $this, 'saveDependency' ] );
         }
         catch ( Exception $e ) {
-            $this->io->error( $e->getMessage() );
-            if ( $output->isVerbose() ) {
-                $this->io->writeln( $e->getTraceAsString() );
-            }
+            $this->printError( $e );
             return 1;
         }
 
@@ -106,21 +102,24 @@ class Add extends Entry
     }
 
     /**
-     * Convert named dependencies into database insert sets.
+     * Convert named dependencies into database ids.
      * 
      * @param array $deps Entry names.
-     * @return array Insert sets.
+     * @return array Entry ids.
      */
     private function getDependencies( array $deps )
     {
-        return array_map( function ( $value ) {
-            if ( strpos( $value, ':') ) {
-                list( $type, $name ) = explode( ':', $value );
-                $id = $this->getEntry( $type, $name );
+        $parts = array_map( function ( $value ) {
+            $parts = explode( ':', $value, 2 );
+            if ( count( $parts ) === 1 ) {
+                array_unshift( $parts, false );
             }
-            else {
-                $id = $this->getEntryByName( $value );
-            }
+            return $parts;
+        }, $deps );
+
+        $ids = array_map( function ( array $list ) {
+            list( $type, $name ) = $list;
+            $id = $this->getEntry( $type, $name );
 
             if ( $id > 0 ) {
                 return $id;
@@ -128,7 +127,9 @@ class Add extends Entry
 
             $msg = ucwords( $name ) . ' not found.';
             throw new UnexpectedValueException( $msg );
-        }, $deps );
+        }, $parts );
+
+        return $ids;
     }
 
     /**

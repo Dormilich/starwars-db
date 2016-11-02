@@ -2,7 +2,7 @@
 
 namespace StarWars\Node;
 
-use Exception;
+use ErrorException;
 use Doctrine\DBAL\Query\QueryBuilder;
 use StarWars\Entry;
 use Symfony\Component\Console\Input\InputArgument;
@@ -49,14 +49,14 @@ class Info extends Entry
             $id = $this->getEntry( $type, $name );
 
             if ( ! $id ) {
-                throw new Exception( 'There is no such entry in the database' );
+                throw new ErrorException( 'There is no such entry in the database', 0, 0 );
             }
 
             $result = $this->getResult( $id );
             $this->renderResult( $result );
         }
         catch ( Exception $e ) {
-            $this->io->note( $e->getMessage() );
+            $this->printError( $e );
         }
 
         return 0;

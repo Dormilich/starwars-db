@@ -63,10 +63,7 @@ class Add extends Entry
 
         }
         catch ( Exception $e ) {
-            $this->io->error( $e->getMessage() );
-            if ( $output->isVerbose() ) {
-                $this->io->writeln( $e->getTraceAsString() );
-            }
+            $this->printError( $e );
             return 1;
         }
 
