@@ -25,5 +25,6 @@ $app->add( new StarWars\Dependency\Delete( $db ) );
 
 $app->add( new StarWars\Tree\Show( $db ) );
 $app->add( new StarWars\Tree\Add( $db ) );
+$app->add( new StarWars\Tree\Delete( $db ) );
 
 $app->run();
