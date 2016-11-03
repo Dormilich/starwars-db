@@ -40,12 +40,13 @@ class Delete extends Entry
 
         $id = $this->entry( $type, $name );
 
-        if ( $id > 0 ) {
-            $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );
-        }
-        else {
+        if ( ! $id ) {
             $this->io->note( 'There is no such entry in the database' );
+            return 0;
         }
+
+        $affected = $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );
+        $output->writeln('<info>Removed ' . ( $affected ?: 'no' ) . ' entry.<info>');
 
         return 0;
     }

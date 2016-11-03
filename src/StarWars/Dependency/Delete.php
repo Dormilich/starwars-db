@@ -32,8 +32,8 @@ class Delete extends Entry
             ->addArgument( 'type', InputArgument::REQUIRED, 
                 'Name of the entry’s type'
             )
-            ->addArgument( 'name', InputArgument::REQUIRED, 
-                'Name of the entry'
+            ->addOption( 'type', 't', InputOption::VALUE_REQUIRED, 
+                'Type of the entry'
             )
             ->addOption( 'item', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
                 'Dependency of the entry in compact form (<type>:<name>).'
@@ -48,7 +48,7 @@ class Delete extends Entry
     {
         try {
             $name = $input->getArgument( 'name' );
-            $type = $input->getArgument( 'type' );
+            $type = $input->getOption( 'type' );
 
             $id = $this->entry( $type, $name, 1 );
 

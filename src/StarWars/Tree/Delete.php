@@ -25,11 +25,11 @@ class Delete extends Entry
             ->setDescription(
                 'Remove one, multiple, or all items of a collection'
             )
-            ->addArgument( 'type', InputArgument::REQUIRED, 
-                'Name of the collection’s type'
-            )
             ->addArgument( 'name', InputArgument::REQUIRED, 
                 'Name of the collection'
+            )
+            ->addOption( 'type', 't', InputOption::VALUE_REQUIRED, 
+                'Type of the tree'
             )
             ->addOption( 'item', null, InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 
                 'Item of the collection in compact form (<type>:<name>).'
@@ -44,9 +44,9 @@ class Delete extends Entry
     {
         try {
             $name = $input->getArgument( 'name' );
-            $type = $input->getArgument( 'type' );
+            $type = $input->getOption( 'type' );
 
-            $id = $this->entry( $type, $name, 0 );
+            $id = $this->entry( $type, $name, 1 );
 
             $items = $input->getOption( 'item' );
             $items = $this->entryList( $items );

@@ -100,6 +100,7 @@ class Find extends Entry
             )
             ->where( 'n.name LIKE :name' )
             ->orderBy( 'b.id', 'asc' )
+            ->addOrderBy( 'n.page', 'asc' )
             ->setParameter( ':name', '%'.$name.'%', 'string' )
         ;
     }
