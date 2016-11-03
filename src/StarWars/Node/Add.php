@@ -6,7 +6,6 @@ use Exception;
 use RuntimeException;
 use UnexpectedValueException;
 use StarWars\Entry;
-use Doctrine\DBAL\Query\QueryBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -58,9 +57,8 @@ class Add extends Entry
 
             $id = $this->createEntry( $type, $name, $book, $page );
 
-            $query = $this->getQuery( $id );
-            $this->renderResult( $query );
-
+            $entry = $this->getData( $id );
+            $this->renderData( $entry );
         }
         catch ( Exception $e ) {
             $this->printError( $e );
@@ -203,9 +201,9 @@ class Add extends Entry
      * Get the added entry’s data.
      * 
      * @param integer $id Entry id.
-     * @return QueryBuilder
+     * @return array
      */
-    private function getQuery( $id )
+    private function getData( $id )
     {
         return $this->db->createQueryBuilder()
             ->select( [
@@ -219,19 +217,20 @@ class Add extends Entry
             ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
             ->where( 'n.id = :id' )
             ->setParameter( ':id', $id, 'integer' )
+            ->execute()
+            ->fetchAll()
         ;
     }
 
     /**
      * Display the results of the query object.
      * 
-     * @param SymfonyStyle $this->io I/O helper object.
      * @param QueryBuilder $query Query object.
      * @return void
      */
-    private function renderResult( QueryBuilder $query )
+    private function renderData( array $data )
     {
-        $result = $query->execute()->fetchAll();
+        $result = $query;
         $this->io->table( [ 'Type', 'Name', 'Book', 'Page' ], $result );
     }
 }

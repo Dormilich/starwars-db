@@ -44,7 +44,7 @@ class Depends extends Entry
         $name = $input->getArgument( 'name' );
         $type = $input->getOption( 'type' );
 
-        $id = $this->getEntry( $type, $name );
+        $id = $this->entry( $type, $name );
 
         if ( ! $id ) {
             $this->io->note( 'There is no such entry in the database' );
@@ -56,7 +56,7 @@ class Depends extends Entry
             : new DependencyFormatter
         ;
 
-        $root = $this->getNode( $id );
+        $root = $this->node( $id );
         $root->setFormatter( $formatter );
         
         $tree = new Tree( $root, $this->io );
@@ -121,7 +121,7 @@ class Depends extends Entry
     private function addNodes( array $data )
     {
         return array_map( function ( array $row ) {
-            $node = $this->getNode( $row[ 'depends' ] );
+            $node = $this->node( $row[ 'depends' ] );
             $node->setLimit( $row[ 'min_value' ] );
             $node->setAmount( $row[ 'min_count' ] );
 

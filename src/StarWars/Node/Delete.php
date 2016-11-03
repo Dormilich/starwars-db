@@ -38,7 +38,7 @@ class Delete extends Entry
         $name = $input->getArgument( 'name' );
         $type = $input->getArgument( 'type' );
 
-        $id = $this->getEntry( $type, $name );
+        $id = $this->entry( $type, $name );
 
         if ( $id > 0 ) {
             $this->db->delete( 'Node', [ 'id' => $id ], [ 'integer' ] );

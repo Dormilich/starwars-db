@@ -44,19 +44,16 @@ class Info extends Entry
     {
         try {
             $name = $input->getArgument( 'name' );
-            $type = $input->getOption( 'type' );
+            $type = $input->getArgument( 'type' );
 
-            $id = $this->getEntry( $type, $name );
+            $id = $this->getEntry( $type, $name, 0 );
 
-            if ( ! $id ) {
-                throw new ErrorException( 'There is no such entry in the database', 0, 0 );
-            }
-
-            $result = $this->getResult( $id );
-            $this->renderResult( $result );
+            $entry = $this->getData( $id );
+            $this->renderData( $entry );
         }
         catch ( Exception $e ) {
             $this->printError( $e );
+            return 1;
         }
 
         return 0;
@@ -68,7 +65,7 @@ class Info extends Entry
      * @param integer $id Entry id.
      * @return array
      */
-    private function getResult( $id )
+    private function getData( $id )
     {
         return $this->db->createQueryBuilder()
             ->select( [
@@ -94,7 +91,7 @@ class Info extends Entry
      * @param array $result Entry data.
      * @return void
      */
-    private function renderResult( array $result )
+    private function renderData( array $result )
     {
         $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], 
             $result[ 'type' ], $result[ 'book' ], $result[ 'page' ] ) );

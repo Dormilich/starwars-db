@@ -51,18 +51,14 @@ class Show extends Entry
             $nest = $input->getOption( 'depth' );
             $nest = filter_var( $nest, \FILTER_VALIDATE_INT );
 
-            $id = $this->getEntry( $type, $name );
-
-            if ( ! $id ) {
-                throw new ErrorException( 'There is no such entry in the database.', 0, 0 );
-            }
+            $id = $this->entry( $type, $name, 0 );
 
             $formatter = $output->isVerbose() 
                 ? new NodeNameRefFormatter 
                 : new NodeNameFormatter
             ;
 
-            $root = $this->getNode( $id );
+            $root = $this->node( $id );
             $root->setFormatter( $formatter );
             
             $tree = new Tree( $root, $this->io );
@@ -79,6 +75,15 @@ class Show extends Entry
         return 0;
     }
 
+    /**
+     * Add tree children.
+     * 
+     * @see http://php.net/array-walk
+     * @param Tree $tree The collection object.
+     * @param integer $_ Array index.
+     * @param integer|false $nesting The maximum nesting level, if any.
+     * @return Tree
+     */
     private function addChildren( Tree $tree, $_, $nesting )
     {
         if ( $nesting === 0 ) {
@@ -91,7 +96,7 @@ class Show extends Entry
         $id = $tree->getKey();
 
         $ids = $this->getCollection( $id );
-        $nodes = array_map( [$this, 'getNode'], $ids );
+        $nodes = array_map( [$this, 'node'], $ids );
         array_walk( $nodes, [$tree, 'addChild'] );
 
         $children = $tree->getChildren();
@@ -100,6 +105,12 @@ class Show extends Entry
         return $tree;
     }
 
+    /**
+     * Get the member ids of the collection.
+     * 
+     * @param integer $id Collection id.
+     * @return array Member ids.
+     */
     private function getCollection( $id )
     {
         return $this->db->createQueryBuilder()

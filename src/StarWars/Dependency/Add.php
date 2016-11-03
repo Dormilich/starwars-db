@@ -60,11 +60,7 @@ class Add extends Entry
             $name = $input->getArgument( 'name' );
             $type = $input->getOption( 'type' );
 
-            $id = $this->getEntry( $type, $name );
-
-            if ( ! $id ) {
-                throw new ErrorException( 'There is no such entry in the database.', 0, 2 );
-            }
+            $id = $this->entry( $type, $name, 2 );
 
             $deps = $input->getOption( 'item' );
             $count = count( $deps );
@@ -106,6 +102,7 @@ class Add extends Entry
      * 
      * @param array $deps Entry names.
      * @return array Entry ids.
+     * @throws UnexpectedValueException Entry not found.
      */
     private function getDependencies( array $deps )
     {
@@ -119,7 +116,7 @@ class Add extends Entry
 
         $ids = array_map( function ( array $list ) {
             list( $type, $name ) = $list;
-            $id = $this->getEntry( $type, $name );
+            $id = $this->entry( $type, $name );
 
             if ( $id > 0 ) {
                 return $id;

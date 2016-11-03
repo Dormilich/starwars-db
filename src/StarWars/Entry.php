@@ -45,19 +45,28 @@ class Entry extends Command
     }
 
     /**
-     * Get the entry id from the provided input. Returns `0` if there is no match.
+     * Get the entry id from the provided input. If a severity level is given, 
+     * it throws an error exception, otherwise it return 0.
      * 
      * @param string|null $type Entry type.
      * @param string $name Entry name.
+     * @param integer|null $severity The severity level of the `entry not found` error.
      * @return integer Entry id.
-     * @throws RuntimeException Multiple entries found.
+     * @throws ErrorException Multiple entries found.
      */
-    protected function getEntry( $type, $name )
+    protected function entry( $type, $name, $severity = null )
     {
-        return $type 
+        $id = $type 
             ? $this->entryByKey( $type, $name ) 
             : $this->entryByName( $name )
         ;
+
+        if ( $id === 0 and is_int( $severity ) ) {
+            $msg = 'There is no such entry in the database.';
+            throw new ErrorException( $msg, 0, $severity );
+        }
+
+        return $id;
     }
 
     /**
@@ -88,7 +97,7 @@ class Entry extends Command
      * 
      * @param string $name Entry name.
      * @return integer Entry id.
-     * @throws RuntimeException Multiple entries found.
+     * @throws ErrorException Multiple entries found.
      */
     private function entryByName( $name )
     {
@@ -104,7 +113,7 @@ class Entry extends Command
         }
 
         $msg = 'Found %d entries (%s) for %s';
-        $msg = sprintf( $msg, $count, implode( ', ', $entries), $name );
+        $msg = sprintf( $msg, $count, implode( ', ', $entries), ucwords( $name ) );
         throw new ErrorException( $msg, 0, 1 );
     }
 
@@ -133,7 +142,7 @@ class Entry extends Command
      * @param integer $id Entry id.
      * @return Node
      */
-    protected function getNode( $id )
+    protected function node( $id )
     {
         $stmt = $this->db->createQueryBuilder()
             ->select( [
@@ -155,6 +164,39 @@ class Entry extends Command
         $stmt->setFetchMode( PDO::FETCH_CLASS, 'StarWars\\Helper\\DepNode' );
 
         return $stmt->fetch();
+    }
+
+    /**
+     * Convert named dependencies into database ids. Skips any names that cannot 
+     * be identified uniquely.
+     * 
+     * @param array $names Entry names.
+     * @return array Entry IDs.
+     */
+    protected function entryList( array $names )
+    {
+        $parts = array_map( function ( $value ) {
+            $parts = explode( ':', $value, 2 );
+            if ( count( $parts ) === 1 ) {
+                array_unshift( $parts, false );
+            }
+            return $parts;
+        }, $names );
+
+        // for some reason array_map() does not like exceptions from called methods
+        $ids = array_map( function ( array $list ) {
+            try {
+                list( $type, $name ) = $list;
+                return $this->entry( $type, $name );
+            } catch ( Exception $e ) {
+                $this->printError( $e );
+                return false;
+            }
+        }, $parts );
+
+        $ids = array_filter( $ids );
+
+        return $ids;
     }
 
     /**

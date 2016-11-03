@@ -4,7 +4,6 @@ namespace StarWars\Node;
 
 use Exception;
 use UnexpectedValueException;
-use Doctrine\DBAL\Query\QueryBuilder;
 use StarWars\Entry;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -56,12 +55,7 @@ class Set extends Entry
             $name = $input->getArgument( 'name' );
             $type = $input->getArgument( 'type' );
 
-            $id = $this->getEntry( $type, $name );
-
-            if ( ! $id ) {
-                $this->io->note( 'There is no such entry in the database' );
-                return 0;
-            }
+            $id = $this->getEntry( $type, $name, 1 );
 
             $data = [];
             $data[ 'book' ] = $this->inputBook( $input );
@@ -71,10 +65,10 @@ class Set extends Entry
             $data = array_filter( $data );
             $this->updateEntry( $id, $data );
 
-            $query = $this->getQuery( $id );
-            $this->renderResult( $query );
-
-        } catch ( Exception $e ) {
+            $entry = $this->getData( $id );
+            $this->renderData( $entry );
+        }
+        catch ( Exception $e ) {
             $this->printError( $e );
             return 1;
         }
@@ -170,9 +164,9 @@ class Set extends Entry
      * Get the updated entry’s data.
      * 
      * @param integer $id Entry id.
-     * @return QueryBuilder
+     * @return array
      */
-    private function getQuery( $id )
+    private function getData( $id )
     {
         return $this->db->createQueryBuilder()
             ->select( [
@@ -187,23 +181,22 @@ class Set extends Entry
             ->innerJoin( 'n', 'NodeType', 't', 'n.type = t.id' )
             ->where( 'n.id = :id' )
             ->setParameter( ':id', $id, 'integer' )
+            ->execute()
+            ->fetch()
         ;
     }
 
     /**
-     * Display the results of the query object.
+     * Display the entry.
      * 
-     * @param SymfonyStyle $this->io I/O helper object.
-     * @param QueryBuilder $query Query object.
+     * @param array $result Entry data.
      * @return void
      */
-    private function renderResult( QueryBuilder $query )
+    private function renderData( array $result )
     {
-        $result = $query->execute()->fetch();
-
         $this->io->section( sprintf( '%s (%s, %s %d)', $result[ 'name' ], 
             $result[ 'type' ], $result[ 'book' ], $result[ 'page' ] ) );
+
         $this->io->text( $result[ 'description' ] );
-        $this->io->newLine();
     }
 }

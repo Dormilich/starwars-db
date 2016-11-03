@@ -3,8 +3,6 @@
 namespace StarWars\Dependency;
 
 use Exception;
-use RuntimeException;
-use UnexpectedValueException;
 use Doctrine\DBAL\Connection;
 use StarWars\Entry;
 use Symfony\Component\Console\Input\InputArgument;
@@ -48,32 +46,16 @@ class Delete extends Entry
      */
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        $name = $input->getArgument( 'name' );
-        $type = $input->getArgument( 'type' );
-
-        $id = $this->getEntry( $type, $name );
-
-        if ( $id === 0 ) {
-            $this->io->note( 'There is no such entry in the database' );
-            return 0;
-        }
-
-        $deps = $input->getOption( 'item' );
-
         try {
-            $query = $this->db->createQueryBuilder()
-                ->delete( 'Dependency' )
-                ->where( 'node = :id' )
-                ->setParameter( ':id', $id, 'integer' )
-            ;
-            if ( count( $deps ) > 0 ) {
-                $deps = $this->getDependencies( $deps );
-                $query
-                    ->andWhere( 'depends IN(:dep)' )
-                    ->setParameter( ':dep', $deps, Connection::PARAM_INT_ARRAY )
-                ;
-            }
-            $count = $query->execute();
+            $name = $input->getArgument( 'name' );
+            $type = $input->getArgument( 'type' );
+
+            $id = $this->entry( $type, $name, 1 );
+
+            $items = $input->getOption( 'item' );
+            $items = $this->entryList( $items );
+
+            $count = $this->deleteItems( $id, $items );
             $output->writeln('<info>Removed '.$count.' dependencies.<info>');
         }
         catch ( Exception $e ) {
@@ -85,24 +67,27 @@ class Delete extends Entry
     }
 
     /**
-     * Convert named dependencies into database ids.
+     * Delete all or some dependencies from an entry.
      * 
-     * @param array $deps Entry names.
-     * @return array Entry IDs.
+     * @param integer $id Entry id.
+     * @param array $items Dependencies’ ids.
+     * @return integer Number of deleted dependencies.
      */
-    private function getDependencies( array $deps )
+    private function deleteItems( $id, array $items )
     {
-        $deps = array_filter( $deps, function ( $value ) {
-            return strpos( $value, ':') > 0;
-        });
+        $query = $this->db->createQueryBuilder()
+            ->delete( 'Dependency' )
+            ->where( 'node = :id' )
+            ->setParameter( ':id', $id, 'integer' )
+        ;
 
-        $deps = array_map( function ( $value ) {
-            list( $type, $name ) = explode( ':', $value, 2 );
-            return $this->getEntry( $type, $name );
-        }, $deps );
+        if ( count( $items ) > 0 ) {
+            $query
+                ->andWhere( 'depends IN(:item)' )
+                ->setParameter( ':item', $items, Connection::PARAM_INT_ARRAY )
+            ;
+        }
 
-        $deps = array_filter( $deps );
-
-        return  $deps;
+        return $query->execute();
     }
 }
