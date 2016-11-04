@@ -12,11 +12,23 @@ class AddNodeTypes extends AbstractSeed
             ], [
                 'name' => 'Class',
             ], [
+                'name' => 'Descriptor', // categories of force powers
+            ], [
                 'name' => 'Feat',
             ], [
-                'name' => 'Power',
+                'name' => 'Force Power',
             ], [
-                'name' => 'Secret',
+                'name' => 'Force Secret',
+            ], [
+                'name' => 'Force Talent',
+            ], [
+                'name' => 'Force Technique',
+            ], [
+                'name' => 'Language',
+            ], [
+                'name' => 'Race', // sub species, needed for droids
+            ], [
+                'name' => 'Size',
             ], [
                 'name' => 'Skill',
             ], [
@@ -24,11 +36,21 @@ class AddNodeTypes extends AbstractSeed
             ], [
                 'name' => 'Talent',
             ], [
-                'name' => 'Technique',
+                'name' => 'Tradition', // sub class for force users
+            ], [
+                'name' => 'Training',
+            ], [
+                'name' => 'Trait',
             ], [
                 'name' => 'Tree',
             ], [
                 'name' => 'Other',
+            ], [
+                'name' => 'Weapon',
+            ], [
+                'name' => 'Weapon Group',
+            ], [
+                'name' => 'Weapon Type',
             ]
         ] );
     }
