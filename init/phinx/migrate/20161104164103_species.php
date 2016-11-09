@@ -50,10 +50,14 @@ class Species extends AbstractMigration
                 'default' => 6,
                 'comment' => 'the species’ base speed',
             ] )
+            ->addColumn( 'size', 'integer', [
+                'comment' => 'the species’ size, usually `small` or `medium`',
+            ] )
             ->addForeignKey( 'id', 'Node', 'id' )
             ->addForeignKey( 'reroll', 'Node', 'id' )
             ->addForeignKey( 'focus', 'Node', 'id' )
             ->addForeignKey( 'feat', 'Node', 'id' )
+            ->addForeignKey( 'size', 'Node', 'id' )
             ->create()
         ;
 

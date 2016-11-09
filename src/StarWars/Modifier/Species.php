@@ -50,7 +50,7 @@ class Species extends Entry
                 'The charisma modifier', 0
             )
             ->addOption( 'reflex', null, InputOption::VALUE_REQUIRED, 
-                'The reflex defense bonus', 0
+                'The reflex defense bonus. Do not include any modifier due to the species’ size!', 0
             )
             ->addOption( 'fortitude', null, InputOption::VALUE_REQUIRED, 
                 'The fortitude defense bonus', 0
@@ -60,6 +60,9 @@ class Species extends Entry
             )
             ->addOption( 'speed', null, InputOption::VALUE_REQUIRED, 
                 'The base speed (squares) of the species', 6
+            )
+            ->addOption( 'size', null, InputOption::VALUE_REQUIRED, 
+                'The species’ size', 'medium'
             )
             ->addOption( 'reroll', null, InputOption::VALUE_REQUIRED, 
                 'The name of the skill that can be rerolled'
@@ -113,6 +116,8 @@ class Species extends Entry
     private function getModifiers( InputInterface $input )
     {
         $mod = [ 'reroll' => null, 'focus'  => null, 'feat' => null ];
+
+        $mod[ 'size' ] = $this->entry( 'Size', $input->getOption( 'size' ), 0 );
 
         if ( $reroll = $input->getOption( 'reroll' ) ) {
             $mod[ 'reroll' ] = $this->entry( 'Skill', $reroll, 0 );
@@ -231,7 +236,9 @@ class Species extends Entry
         $data = $this->fetchSpeciesMod( $id );
 
         $this->io->section( $data[ 'species' ] . ' species modifiers' );
-        $this->io->writeln( 'Base speed: ' . $data[ 'speed' ] . ' squares' );
+
+        $line = 'Base speed: %s creature, %d squares';
+        $this->io->writeln( sprintf( $line, $data[ 'size' ], $data[ 'speed' ] ) );
         $this->io->newLine();
 
         $this->showAbilities( $data );
@@ -274,12 +281,14 @@ class Species extends Entry
                 'n1.name AS reroll',
                 'n2.name AS focus',
                 'n3.name AS feat',
+                'n4.name AS size'
             ] )
             ->from( 'SpeciesMod', 's' )
-            ->leftJoin( 's', 'Node', 'n0', 's.id = n0.id')
+            ->innerJoin( 's', 'Node', 'n0', 's.id = n0.id')
             ->leftJoin( 's', 'Node', 'n1', 's.reroll = n1.id')
             ->leftJoin( 's', 'Node', 'n2', 's.focus = n2.id')
             ->leftJoin( 's', 'Node', 'n3', 's.feat = n3.id')
+            ->innerJoin( 's', 'Node', 'n4', 's.size = n4.id')
             ->where( 's.id = ?' )
             ->setParameter( 0, $id, 'integer' )
             ->execute()
