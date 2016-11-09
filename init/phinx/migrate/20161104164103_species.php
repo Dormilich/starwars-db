@@ -46,6 +46,10 @@ class Species extends AbstractMigration
                 'null' => true,
                 'comment' => 'bonus feat for species',
             ] )
+            ->addColumn( 'speed', 'integer', [
+                'default' => 6,
+                'comment' => 'the species’ base speed',
+            ] )
             ->addForeignKey( 'id', 'Node', 'id' )
             ->addForeignKey( 'reroll', 'Node', 'id' )
             ->addForeignKey( 'focus', 'Node', 'id' )

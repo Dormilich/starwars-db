@@ -26,6 +26,8 @@ class AddNodeTypes extends AbstractSeed
             ], [
                 'name' => 'Language',
             ], [
+                'name' => 'Medical Secret',
+            ], [
                 'name' => 'Race', // sub species, needed for droids
             ], [
                 'name' => 'Size',

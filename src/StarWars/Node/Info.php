@@ -44,9 +44,9 @@ class Info extends Entry
     {
         try {
             $name = $input->getArgument( 'name' );
-            $type = $input->getArgument( 'type' );
+            $type = $input->getOption( 'type' );
 
-            $id = $this->getEntry( $type, $name, 0 );
+            $id = $this->entry( $type, $name, 0 );
 
             $entry = $this->getData( $id );
             $this->renderData( $entry );
