@@ -64,9 +64,6 @@ class Species extends Entry
             ->addOption( 'size', null, InputOption::VALUE_REQUIRED, 
                 'The species’ size', 'medium'
             )
-            ->addOption( 'reroll', null, InputOption::VALUE_REQUIRED, 
-                'The name of the skill that can be rerolled'
-            )
             ->addOption( 'focus', null, InputOption::VALUE_REQUIRED, 
                 'The name of the skill that triggers the conditional bonus feat'
             )
@@ -115,13 +112,10 @@ class Species extends Entry
      */
     private function getModifiers( InputInterface $input )
     {
-        $mod = [ 'reroll' => null, 'focus'  => null, 'feat' => null ];
+        $mod = [ 'focus' => null, 'feat' => null ];
 
         $mod[ 'size' ] = $this->entry( 'Size', $input->getOption( 'size' ), 0 );
 
-        if ( $reroll = $input->getOption( 'reroll' ) ) {
-            $mod[ 'reroll' ] = $this->entry( 'Skill', $reroll, 0 );
-        }
         if ( $focus = $input->getOption( 'focus' ) ) {
             $mod[ 'focus' ] = $this->entry( 'Skill', $focus, 0 );
         }
@@ -231,6 +225,12 @@ class Species extends Entry
         ;
     }
 
+    /**
+     * Print a summary of the species’ modifiers.
+     * 
+     * @param integer $id Species id.
+     * @return void
+     */
     private function showModifiers( $id )
     {
         $data = $this->fetchSpeciesMod( $id );
@@ -249,13 +249,6 @@ class Species extends Entry
             $this->io->newLine();
         }
 
-        if ( $data[ 'reroll' ] ) {
-            $line = $data[ 'species' ] . 's may choose to reroll any ' . $data[ 'reroll' ] 
-                . ' check, but the result of the reroll must be accepted even if it is worse.';
-            $this->io->writeln( $line );
-            $this->io->newLine();
-        }
-
         if ( $data[ 'focus' ] ) {
             $line = 'A %1$s with %2$s as trained skill gains Skill Focus (%2$s) as bonus feat.';
             $this->io->writeln( sprintf( $line, $data[ 'species' ], $data[ 'focus' ] ) );
@@ -263,11 +256,17 @@ class Species extends Entry
         }
     }
 
+    /**
+     * Get the species’ modifiers from the database.
+     * 
+     * @param integer $id Species id.
+     * @return array
+     */
     private function fetchSpeciesMod( $id )
     {
         return $this->db->createQueryBuilder()
             ->select( [
-                'n0.name AS species',
+                'n1.name AS species',
                 's.str',
                 's.dex',
                 's.con',
@@ -278,14 +277,12 @@ class Species extends Entry
                 's.reflex',
                 's.fortitude',
                 's.will',
-                'n1.name AS reroll',
                 'n2.name AS focus',
                 'n3.name AS feat',
-                'n4.name AS size'
+                'n4.name AS size',
             ] )
             ->from( 'SpeciesMod', 's' )
-            ->innerJoin( 's', 'Node', 'n0', 's.id = n0.id')
-            ->leftJoin( 's', 'Node', 'n1', 's.reroll = n1.id')
+            ->innerJoin( 's', 'Node', 'n1', 's.id = n0.id')
             ->leftJoin( 's', 'Node', 'n2', 's.focus = n2.id')
             ->leftJoin( 's', 'Node', 'n3', 's.feat = n3.id')
             ->innerJoin( 's', 'Node', 'n4', 's.size = n4.id')
@@ -296,6 +293,12 @@ class Species extends Entry
         ;
     }
 
+    /**
+     * Print the ability modifiers if any.
+     * 
+     * @param array $data Species’ modifiers.
+     * @return void
+     */
     private function showAbilities( array $data )
     {
         $abilities = [ 'str', 'dex', 'con', 'int', 'wis', 'cha' ];
@@ -314,6 +317,12 @@ class Species extends Entry
         $this->io->newLine( 2 );
     }
 
+    /**
+     * Print the defense modifiers if any.
+     * 
+     * @param array $data Species’ modifiers.
+     * @return void
+     */
     private function showDefenses( array $data )
     {
         $defense = [ 'reflex', 'fortitude', 'will' ];
